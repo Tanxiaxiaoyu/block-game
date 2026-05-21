@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>别踩白块</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        .game-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 500px;
+            width: 90%;
+        }
+
+        .game-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .game-title {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .score-board {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+        }
+
+        .score-item {
+            text-align: center;
+        }
+
+        .score-label {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .score-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .game-area {
+            position: relative;
+            width: 100%;
+            height: 500px;
+            background: #1a1a2e;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 3px solid #667eea;
+        }
+
+        .track {
+            position: absolute;
+            width: 25%;
+            height: 100%;
+            border-right: 1px solid #333;
+        }
+
+        .track:nth-child(1) { left: 0%; }
+        .track:nth-child(2) { left: 25%; }
+        .track:nth-child(3) { left: 50%; }
+        .track:nth-child(4) { left: 75%; border-right: none; }
+
+        .block {
+            position: absolute;
+            width: 25%;
+            height: 80px;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+
+        .block.white {
+            background: linear-gradient(145deg, #ffffff, #e6e6e6);
+        }
+
+        .block.black {
+            background: linear-gradient(145deg, #2d2d2d, #1a1a1a);
+        }
+
+        .block:hover {
+            transform: scale(1.05);
+        }
+
+        .block.black:hover {
+            box-shadow: 0 0 20px rgba(102, 126, 234, 0.8);
+        }
+
+        .block.white:hover {
+            box-shadow: 0 0 20px rgba(255, 0, 0, 0.5);
+        }
+
+        .game-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+        }
+
+        .overlay-content {
+            text-align: center;
+            color: white;
+        }
+
+        .overlay-title {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            color: #667eea;
+        }
+
+        .overlay-score {
+            font-size: 1.5rem;
+            margin-bottom: 30px;
+        }
+
+        .game-btn {
+            padding: 15px 40px;
+            font-size: 1.2rem;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .game-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
+        }
+
+        .game-btn:active {
+            transform: translateY(0);
+        }
+
+        .game-instructions {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .instructions-title {
+            font-size: 1rem;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .instructions-text {
+            font-size: 0.9rem;
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .speed-indicator {
+            font-size: 0.8rem;
+            color: #888;
+            margin-top: 10px;
+        }
+
+        .disappearing {
+            animation: disappear 0.3s ease-out forwards;
+        }
+
+        @keyframes disappear {
+            0% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1.2);
+                opacity: 0.5;
+            }
+            100% {
+                transform: scale(0);
+                opacity: 0;
+            }
+        }
+
+        .click-feedback {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: rgba(102, 126, 234, 0.3);
+            pointer-events: none;
+            animation: feedback 0.3s ease-out forwards;
+        }
+
+        @keyframes feedback {
+            0% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            100% {
+                opacity: 0;
+                transform: scale(2);
+            }
+        }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="game-header">
+            <h1 class="game-title">🎵 别踩白块</h1>
+        </div>
+
+        <div class="score-board">
+            <div class="score-item">
+                <div class="score-label">当前分数</div>
+                <div class="score-value" id="currentScore">0</div>
+            </div>
+            <div class="score-item">
+                <div class="score-label">最高分</div>
+                <div class="score-value" id="highScore">0</div>
+            </div>
+        </div>
+
+        <div class="game-area" id="gameArea">
+            <div class="track"></div>
+            <div class="track"></div>
+            <div class="track"></div>
+            <div class="track"></div>
+
+            <div class="game-overlay" id="startOverlay">
+                <div class="overlay-content">
+                    <div class="overlay-title">🎮 别踩白块</div>
+                    <p class="overlay-score">准备好挑战了吗？</p>
+                    <button class="game-btn" id="startBtn">开始游戏</button>
+                </div>
+            </div>
+
+            <div class="game-overlay hidden" id="endOverlay">
+                <div class="overlay-content">
+                    <div class="overlay-title">❌ 游戏结束</div>
+                    <p class="overlay-score">最终得分：<span id="finalScore">0</span></p>
+                    <p class="overlay-score">最高分：<span id="finalHighScore">0</span></p>
+                    <button class="game-btn" id="restartBtn">再来一局</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="game-instructions">
+            <div class="instructions-title">🎯 游戏规则</div>
+            <div class="instructions-text">
+                点击 <strong>黑色方块</strong> 将其消除并得分<br>
+                避免点击 <strong>白色方块</strong>，否则游戏结束！
+            </div>
+            <div class="speed-indicator">速度等级：<span id="speedLevel">1</span></div>
+        </div>
+    </div>
+
+    <script>
+        class BlockGame {
+            constructor() {
+                this.gameArea = document.getElementById('gameArea');
+                this.currentScoreEl = document.getElementById('currentScore');
+                this.highScoreEl = document.getElementById('highScore');
+                this.finalScoreEl = document.getElementById('finalScore');
+                this.finalHighScoreEl = document.getElementById('finalHighScore');
+                this.startOverlay = document.getElementById('startOverlay');
+                this.endOverlay = document.getElementById('endOverlay');
+                this.startBtn = document.getElementById('startBtn');
+                this.restartBtn = document.getElementById('restartBtn');
+                this.speedLevelEl = document.getElementById('speedLevel');
+
+                this.score = 0;
+                this.highScore = this.loadHighScore();
+                this.isPlaying = false;
+                this.blocks = [];
+                this.animationId = null;
+                this.baseSpeed = 2;
+                this.currentSpeed = this.baseSpeed;
+                this.maxSpeed = this.baseSpeed * 3;
+                this.speedIncreaseInterval = 10;
+                this.spawnInterval = 800;
+                this.lastSpawnTime = 0;
+
+                this.init();
+            }
+
+            init() {
+                this.highScoreEl.textContent = this.highScore;
+                this.startBtn.addEventListener('click', () => this.startGame());
+                this.restartBtn.addEventListener('click', () => this.startGame());
+            }
+
+            loadHighScore() {
+                const saved = localStorage.getItem('blockGameHighScore');
+                return saved ? parseInt(saved) : 0;
+            }
+
+            saveHighScore() {
+                localStorage.setItem('blockGameHighScore', this.highScore.toString());
+            }
+
+            startGame() {
+                this.score = 0;
+                this.currentSpeed = this.baseSpeed;
+                this.blocks = [];
+                this.isPlaying = true;
+                this.lastSpawnTime = 0;
+
+                this.currentScoreEl.textContent = '0';
+                this.speedLevelEl.textContent = '1';
+                this.startOverlay.classList.add('hidden');
+                this.endOverlay.classList.add('hidden');
+
+                this.clearBlocks();
+                this.gameLoop();
+            }
+
+            clearBlocks() {
+                const existingBlocks = this.gameArea.querySelectorAll('.block');
+                existingBlocks.forEach(block => block.remove());
+            }
+
+            gameLoop(timestamp = 0) {
+                if (!this.isPlaying) return;
+
+                if (timestamp - this.lastSpawnTime > this.spawnInterval) {
+                    this.spawnRow();
+                    this.lastSpawnTime = timestamp;
+                }
+
+                this.updateBlocks();
+                this.checkCollisions();
+
+                this.animationId = requestAnimationFrame((ts) => this.gameLoop(ts));
+            }
+
+            spawnRow() {
+                const numBlackBlocks = Math.floor(Math.random() * 4) + 1;
+                const positions = [0, 1, 2, 3];
+                
+                for (let i = positions.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [positions[i], positions[j]] = [positions[j], positions[i]];
+                }
+
+                const blackPositions = positions.slice(0, numBlackBlocks);
+
+                blackPositions.forEach(pos => {
+                    this.createBlock(pos, true);
+                });
+
+                positions.slice(numBlackBlocks).forEach(pos => {
+                    this.createBlock(pos, false);
+                });
+            }
+
+            createBlock(position, isBlack) {
+                const block = document.createElement('div');
+                block.className = `block ${isBlack ? 'black' : 'white'}`;
+                block.style.left = `${position * 25}%`;
+                block.style.top = '-80px';
+                block.dataset.isBlack = isBlack;
+
+                block.addEventListener('click', (e) => this.handleBlockClick(e, block, isBlack));
+
+                this.gameArea.appendChild(block);
+                this.blocks.push({
+                    element: block,
+                    top: -80,
+                    isBlack: isBlack
+                });
+            }
+
+            handleBlockClick(e, block, isBlack) {
+                if (!this.isPlaying) return;
+
+                e.stopPropagation();
+
+                if (isBlack) {
+                    this.removeBlock(block);
+                    this.incrementScore();
+                } else {
+                    this.gameOver();
+                }
+            }
+
+            removeBlock(block) {
+                block.classList.add('disappearing');
+                
+                const feedback = document.createElement('div');
+                feedback.className = 'click-feedback';
+                block.appendChild(feedback);
+
+                setTimeout(() => {
+                    block.remove();
+                    this.blocks = this.blocks.filter(b => b.element !== block);
+                }, 300);
+            }
+
+            incrementScore() {
+                this.score++;
+                this.currentScoreEl.textContent = this.score;
+
+                if (this.score > this.highScore) {
+                    this.highScore = this.score;
+                    this.highScoreEl.textContent = this.highScore;
+                    this.saveHighScore();
+                }
+
+                if (this.score % this.speedIncreaseInterval === 0) {
+                    this.increaseSpeed();
+                }
+            }
+
+            increaseSpeed() {
+                if (this.currentSpeed < this.maxSpeed) {
+                    this.currentSpeed = Math.min(
+                        this.currentSpeed * 1.1,
+                        this.maxSpeed
+                    );
+                    
+                    const level = Math.floor((this.currentSpeed / this.baseSpeed - 1) / 0.1) + 1;
+                    this.speedLevelEl.textContent = Math.min(level, 20);
+                }
+            }
+
+            updateBlocks() {
+                this.blocks.forEach(block => {
+                    block.top += this.currentSpeed;
+                    block.element.style.top = `${block.top}px`;
+                });
+
+                this.blocks = this.blocks.filter(block => {
+                    if (block.top > 600) {
+                        block.element.remove();
+                        return false;
+                    }
+                    return true;
+                });
+            }
+
+            checkCollisions() {
+                this.blocks.forEach(block => {
+                    if (block.top > 500 && block.top < 580 && !block.element.classList.contains('disappearing')) {
+                        if (!block.isBlack) {
+                            this.gameOver();
+                        }
+                    }
+                });
+            }
+
+            gameOver() {
+                this.isPlaying = false;
+                
+                if (this.animationId) {
+                    cancelAnimationFrame(this.animationId);
+                }
+
+                this.finalScoreEl.textContent = this.score;
+                this.finalHighScoreEl.textContent = this.highScore;
+                
+                setTimeout(() => {
+                    this.endOverlay.classList.remove('hidden');
+                }, 300);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            new BlockGame();
+        });
+    </script>
+</body>
+</html>
