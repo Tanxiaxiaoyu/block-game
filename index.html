@@ -1012,7 +1012,7 @@
             checkCollisions() {
                 this.blocks.forEach(block => {
                     if (block.top > 500 && block.top < 580 && !block.element.classList.contains('disappearing')) {
-                        if (!block.isBlack) {
+                        if (block.isBlack) {
                             this.playSound('gameOver');
                             this.shakeGameArea();
                             this.gameOver();
